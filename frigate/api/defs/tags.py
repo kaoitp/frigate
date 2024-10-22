@@ -10,5 +10,6 @@ class Tags(Enum):
     review = "Review"
     export = "Export"
     events = "Events"
+    classification = "classification"
     auth = "Auth"
     reset = "Reset"
