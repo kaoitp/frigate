@@ -2,6 +2,7 @@ import {
   useAudioState,
   useAutotrackingState,
   useDetectState,
+  useEnabledState,
   usePtzCommand,
   useRecordingsState,
   useSnapshotsState,
@@ -82,6 +83,8 @@ import {
   LuHistory,
   LuInfo,
   LuPictureInPicture,
+  LuPower,
+  LuPowerOff,
   LuRotateCw,
   LuVideo,
   LuVideoOff,
@@ -186,6 +189,10 @@ export default function LiveCameraView({
       ) != undefined
     );
   }, [cameraMetadata]);
+
+  // camera enabled state
+  const { payload: enabledState } = useEnabledState(camera.name);
+  const cameraEnabled = enabledState === "ON";
 
   // click overlay for ptzs
 
@@ -483,6 +490,7 @@ export default function LiveCameraView({
                       setPip(false);
                     }
                   }}
+                  disabled={!cameraEnabled}
                 />
               )}
               {supports2WayTalk && (
@@ -494,11 +502,11 @@ export default function LiveCameraView({
                   title={`${mic ? "Disable" : "Enable"} Two Way Talk`}
                   onClick={() => {
                     setMic(!mic);
-                    // Turn on audio when enabling the mic if audio is currently off
                     if (!mic && !audio) {
                       setAudio(true);
                     }
                   }}
+                  disabled={!cameraEnabled}
                 />
               )}
               {supportsAudioOutput && preferredLiveMode != "jsmpeg" && (
@@ -509,6 +517,7 @@ export default function LiveCameraView({
                   isActive={audio ?? false}
                   title={`${audio ? "Disable" : "Enable"} Camera Audio`}
                   onClick={() => setAudio(!audio)}
+                  disabled={!cameraEnabled}
                 />
               )}
               <FrigateCameraFeatures
@@ -530,6 +539,7 @@ export default function LiveCameraView({
                 setLowBandwidth={setLowBandwidth}
                 supportsAudioOutput={supportsAudioOutput}
                 supports2WayTalk={supports2WayTalk}
+                cameraEnabled={cameraEnabled}
               />
             </div>
           </TooltipProvider>
@@ -926,6 +936,7 @@ type FrigateCameraFeaturesProps = {
   setLowBandwidth: React.Dispatch<React.SetStateAction<boolean>>;
   supportsAudioOutput: boolean;
   supports2WayTalk: boolean;
+  cameraEnabled: boolean;
 };
 function FrigateCameraFeatures({
   camera,
@@ -944,8 +955,12 @@ function FrigateCameraFeatures({
   setLowBandwidth,
   supportsAudioOutput,
   supports2WayTalk,
+  cameraEnabled,
 }: FrigateCameraFeaturesProps) {
   const { payload: detectState, send: sendDetect } = useDetectState(
+    camera.name,
+  );
+  const { payload: enabledState, send: sendEnabled } = useEnabledState(
     camera.name,
   );
   const { payload: recordState, send: sendRecord } = useRecordingsState(
@@ -1059,10 +1074,20 @@ function FrigateCameraFeatures({
         <CameraFeatureToggle
           className="p-2 md:p-0"
           variant={fullscreen ? "overlay" : "primary"}
+          Icon={enabledState == "ON" ? LuPower : LuPowerOff}
+          isActive={enabledState == "ON"}
+          title={`${enabledState == "ON" ? "Disable" : "Enable"} Camera`}
+          onClick={() => sendEnabled(enabledState == "ON" ? "OFF" : "ON")}
+          disabled={false}
+        />
+        <CameraFeatureToggle
+          className="p-2 md:p-0"
+          variant={fullscreen ? "overlay" : "primary"}
           Icon={detectState == "ON" ? MdPersonSearch : MdPersonOff}
           isActive={detectState == "ON"}
           title={`${detectState == "ON" ? "Disable" : "Enable"} Detect`}
           onClick={() => sendDetect(detectState == "ON" ? "OFF" : "ON")}
+          disabled={!cameraEnabled}
         />
         <CameraFeatureToggle
           className="p-2 md:p-0"
@@ -1071,6 +1096,7 @@ function FrigateCameraFeatures({
           isActive={recordState == "ON"}
           title={`${recordState == "ON" ? "Disable" : "Enable"} Recording`}
           onClick={() => sendRecord(recordState == "ON" ? "OFF" : "ON")}
+          disabled={!cameraEnabled}
         />
         <CameraFeatureToggle
           className="p-2 md:p-0"
@@ -1079,6 +1105,7 @@ function FrigateCameraFeatures({
           isActive={snapshotState == "ON"}
           title={`${snapshotState == "ON" ? "Disable" : "Enable"} Snapshots`}
           onClick={() => sendSnapshot(snapshotState == "ON" ? "OFF" : "ON")}
+          disabled={!cameraEnabled}
         />
         {audioDetectEnabled && (
           <CameraFeatureToggle
@@ -1088,6 +1115,7 @@ function FrigateCameraFeatures({
             isActive={audioState == "ON"}
             title={`${audioState == "ON" ? "Disable" : "Enable"} Audio Detect`}
             onClick={() => sendAudio(audioState == "ON" ? "OFF" : "ON")}
+            disabled={!cameraEnabled}
           />
         )}
         {autotrackingEnabled && (
@@ -1100,6 +1128,7 @@ function FrigateCameraFeatures({
             onClick={() =>
               sendAutotracking(autotrackingState == "ON" ? "OFF" : "ON")
             }
+            disabled={!cameraEnabled}
           />
         )}
         <CameraFeatureToggle
@@ -1112,6 +1141,7 @@ function FrigateCameraFeatures({
           isActive={isRecording}
           title={`${isRecording ? "Stop" : "Start"} on-demand recording`}
           onClick={handleEventButtonClick}
+          disabled={!cameraEnabled}
         />
 
         <DropdownMenu modal={false}>
