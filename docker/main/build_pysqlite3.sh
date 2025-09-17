@@ -6,6 +6,7 @@ SQLITE3_VERSION="3.46.0"
 PYSQLITE3_VERSION="0.5.3"
 
 # Fetch the pre-built sqlite amalgamation instead of building from source
+# Fetch the pre-built sqlite amalgamation instead of building from source
 if [[ ! -d "sqlite" ]]; then
   mkdir sqlite
   cd sqlite
